@@ -5,26 +5,27 @@ from django.shortcuts import get_object_or_404, render
 #from django.template import loader
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.views import generic
 
 from .models import Question, Choice
 
 
-def index(request):
-    latest_question_list = Question.objects.order_by('-pub_date')[:5]
-    #template = loader.get_template('polls/index.html')
-    context = { #this is a dictionarp
-    	'latest_question_list': latest_question_list,
-    }
-    return render(request, 'polls/index.html', context)
+class IndexView(generic.ListView):
+	template_name = 'polls/index.html'
+	context_object_name = 'latest_question_list'
 
-def detail(request, question_id):
-	q = get_object_or_404(Question, pk=question_id)
-	return render(request, 'polls/detail.html', {'q':q})
+	def get_queryset(self):
+		return Question.objects.order_by('-pub_date')[:5]
 
+class DetailView(generic.DetailView):
+	template_name = 'polls/detail.html'
+	model = Question
+	context_object_name = 'q' #default would be 'question' but I didnt follom the tutorial
 
-def results(request, question_id):
-	q = get_object_or_404(Question, pk=question_id)
-	return render(request, 'polls/results.html', {'q':q})
+class ResultsView(generic.DetailView):
+	template_name = 'polls/results.html'
+	model = Question
+	context_object_name = 'q'
 
 def vote(request, question_id):
 	q = get_object_or_404(Question, pk=question_id)
