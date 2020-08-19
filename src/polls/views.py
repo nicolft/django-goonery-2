@@ -3,9 +3,10 @@ from django.shortcuts import get_object_or_404, render
 # Create your views here.
 #from django.http import HttpResponse
 #from django.template import loader
-from django.http import Http404
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
-from .models import Question
+from .models import Question, Choice
 
 
 def index(request):
@@ -26,9 +27,14 @@ def results(request, question_id):
 	return render(request, 'polls/results.html', {'q':q})
 
 def vote(request, question_id):
+	q = get_object_or_404(Question, pk=question_id)
+	#1. try to get the selected choice and increment its votes attribute
+	#2. return an httpresponse
 	try:
-		q = Question.objects.get(pk=1)
-	except:
-		raise Http404("Poll does not exist.")
-	context = {'q':q}
-	return render(request, 'polls/vote.html', context)
+		selected_choice = q.choice_set.get(pk=request.POST["choice"])
+	except(Choice.DoesNotExist, KeyError):
+		return render(request, 'polls/detail.html', {'q':q, 'error_message':"You didn't select an option."})
+	else:
+		selected_choice.votes += 1
+		selected_choice.save()
+		return HttpResponseRedirect(reverse('polls:results', args=(q.id,)))
